@@ -480,14 +480,14 @@ void cat(CHAR16* args)
 
 void touch(CHAR16* args)
 {
-    if (fileProtected(args))
-    {
-        Print(L"\r\naccess denied.");
-        return;
-    }
     if (args == NULL || *args == L'\0')
     {
         Print(L"\r\nprovide a filename.");
+        return;
+    }
+    if (fileProtected(args))
+    {
+        Print(L"\r\naccess denied.");
         return;
     }
     if (StrCmp(args, L".") == 0 || StrCmp(args, L"..") == 0)
@@ -512,17 +512,18 @@ void touch(CHAR16* args)
 
 void edit(CHAR16* args)
 {
+    if (args == NULL || *args == L'\0')
+    {
+        Print(L"\r\nprovide a filename.");
+        return;
+    }
+
     if (fileProtected(args))
     {
         Print(L"\r\naccess denied.");
         return;
     }
 
-    if (args == NULL || *args == L'\0')
-    {
-        Print(L"\r\nprovide a filename.");
-        return;
-    }
     if (StrCmp(args, L".") == 0 || StrCmp(args, L"..") == 0)
     {
         Print(L"\r\ncan't edit cd or pd.");
@@ -860,17 +861,18 @@ EFI_STATUS removeFile(EFI_FILE_PROTOCOL* Root, CHAR16* location)
 
 void remove(CHAR16* args)
 {
+    if (args == NULL || *args == L'\0')
+    {
+        Print(L"\r\nprovide a filename.");
+        return;
+    }
+
     if (fileProtected(args))
     {
         Print(L"\r\naccess denied.");
         return;
     }
 
-    if (args == NULL || *args == L'\0')
-    {
-        Print(L"\r\nprovide a filename.");
-        return;
-    }
     if (StrCmp(args, L".") == 0 || StrCmp(args, L"..") == 0)
     {
         Print(L"\r\ncan't delete cd or pd.");
@@ -899,6 +901,55 @@ void remove(CHAR16* args)
     }
 }
 
+EFI_STATUS createDirectory(EFI_FILE_PROTOCOL* Root, CHAR16* name)
+{
+    EFI_FILE_PROTOCOL* dir;
+
+    EFI_STATUS status = Root->Open(
+        Root,
+        &dir,
+        name,
+        EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
+        EFI_FILE_DIRECTORY
+    );
+    if (EFI_ERROR(status))
+    {
+        return status;
+    }
+
+    dir->Close(dir);
+    return EFI_SUCCESS;
+}
+
+void mkdir(CHAR16* args)
+{
+    if (args == NULL || *args == L'\0')
+    {
+        Print(L"\r\nprovide a dir name.");
+        return;
+    }
+
+    if (fileProtected(args))
+    {
+        Print(L"\r\naccess denied.");
+        return;
+    }
+
+    if (StrCmp(args, L".") == 0 || StrCmp(args, L"..") == 0)
+    {
+        Print(L"\r\ncan't make dir cd or pd.");
+        return;
+    }
+
+    EFI_STATUS status = createDirectory(gCurrentDirectory, args);
+
+    if (EFI_ERROR(status))
+    {
+        Print(L"\r\ncould not make dir: ");
+        Print(args);
+    }
+}
+
 void help(CHAR16* args);
 
 command commands[] =
@@ -919,7 +970,8 @@ command commands[] =
     {L"touch", touch, TRUE},
     {L"edit", edit, TRUE},
     {L"remove", remove, TRUE},
-    {L"rm", remove, TRUE}
+    {L"rm", remove, TRUE},
+    {L"mkdir", mkdir, TRUE}
 };
 
 void help(CHAR16* args)
