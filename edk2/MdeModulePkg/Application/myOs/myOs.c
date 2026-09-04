@@ -216,6 +216,18 @@ void PrintCursor(void)
     Print(L"\u2588");
 }
 
+BOOLEAN searchStrArray(UINTN count, CHAR16** strArray, CHAR16* search)
+{
+    for (UINTN i = 0; i < count; i++)
+    {
+        if(StrCmp(strArray[i], search) == 0)
+        {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 typedef struct
 {
     CHAR16* name;
