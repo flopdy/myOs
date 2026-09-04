@@ -793,6 +793,49 @@ void edit(CHAR16* args)
     clear(L"");
 }
 
+void parseArgs(CHAR16* args, CHAR16*** params, UINTN* count)
+{
+    UINTN argsLength = StrLen(args);
+
+    // set every space to a break character
+    *count = 0;
+    UINTN lastBreakChar = 0;
+    for (UINTN i=0; i<argsLength; i++)
+    {
+        if (args[i] == L' ')
+        {
+            args[i] = L'\0';
+
+            // enter last param into params
+            (*params)[*count] = &args[lastBreakChar + (*count != 0)]; // from last \0 to current \0
+            lastBreakChar = i;
+            (*count)++;
+        }
+    }
+
+    if (lastBreakChar < argsLength)
+    {
+        (*params)[*count] = &args[lastBreakChar];
+        (*count)++;
+    }
+}
+
+void parseTest(CHAR16* args)
+{
+    CHAR16** params;
+    UINTN paramCount;
+
+    parseArgs(args, &params, &paramCount);
+    
+    Print(L"\r\n");
+
+    for (UINTN i = 0; i < paramCount; i++)
+    {
+        Print(L"%s", params[i]);
+        Print(L", ");
+    }
+}
+
 EFI_STATUS removeFile(EFI_FILE_PROTOCOL* Root, CHAR16* location)
 {
     EFI_FILE_PROTOCOL* file;
