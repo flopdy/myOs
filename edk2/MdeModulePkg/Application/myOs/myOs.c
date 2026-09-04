@@ -901,8 +901,6 @@ EFI_STATUS openFile(EFI_FILE_PROTOCOL* Root, CHAR16* location, EFI_FILE_INFO** r
 
 EFI_STATUS removeFile(EFI_FILE_PROTOCOL* Root, CHAR16* location)
 {
-    Print(L"\r\nremoveFile");
-
     EFI_FILE_INFO* info;
     EFI_FILE_PROTOCOL* file;
 
@@ -929,13 +927,10 @@ EFI_STATUS removeFile(EFI_FILE_PROTOCOL* Root, CHAR16* location)
 
 EFI_STATUS removeDir(EFI_FILE_PROTOCOL* Root, CHAR16* location)
 {
-    Print(L"\r\nremoveDir");
-
     EFI_FILE_INFO* info;
     EFI_FILE_PROTOCOL* dir;
 
     EFI_STATUS status = openFile(Root, location, &info, &dir);
-    Print(L"\r\nEFI_STATUS status = openFile(Root, location, &info, &dir); %r", status);
 
     if (EFI_ERROR(status))
     {
@@ -954,7 +949,6 @@ EFI_STATUS removeDir(EFI_FILE_PROTOCOL* Root, CHAR16* location)
     status = dir->SetPosition(dir, 0);
     while (TRUE)
     {
-        Print(L"\r\nstatus = dir->SetPosition(dir, headerDefPos); %r", status);
         if (EFI_ERROR(status))
         {
             gBS->FreePool(info);
@@ -970,7 +964,6 @@ EFI_STATUS removeDir(EFI_FILE_PROTOCOL* Root, CHAR16* location)
             bufferSize,
             (VOID**)&buffer
         );
-        Print(L"\r\nstatus = gBS->AllocatePool( %r", status);
         if (EFI_ERROR(status))
         {
             gBS->FreePool(info);
@@ -983,7 +976,6 @@ EFI_STATUS removeDir(EFI_FILE_PROTOCOL* Root, CHAR16* location)
             &bufferSize,
             buffer
         );
-        Print(L"\r\nstatus = dir->Read( %r", status);
         if (EFI_ERROR(status))
         {
             gBS->FreePool(buffer);
@@ -1022,7 +1014,6 @@ EFI_STATUS removeDir(EFI_FILE_PROTOCOL* Root, CHAR16* location)
         {
             status = removeFile(dir, buffer->FileName);
         }
-        Print(L"\r\nremoveFile/removeDir(dir, buffer->FileName); %r", status);
 
         gBS->FreePool(buffer);
 
