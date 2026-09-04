@@ -893,15 +893,147 @@ EFI_STATUS openFile(EFI_FILE_PROTOCOL* Root, CHAR16* location, EFI_FILE_INFO** r
         return status;
     }
 
-    if ((!directoryDel) & info->Attribute & EFI_FILE_DIRECTORY)
+    *returnInfo = info;
+    *returnFile = file;
+
+    return EFI_SUCCESS;
+}
+
+EFI_STATUS removeFile(EFI_FILE_PROTOCOL* Root, CHAR16* location)
+{
+    Print(L"\r\nremoveFile");
+
+    EFI_FILE_INFO* info;
+    EFI_FILE_PROTOCOL* file;
+
+    EFI_STATUS status = openFile(Root, location, &info, &file);
+
+    if (EFI_ERROR(status))
+    {
+        return status;
+    }
+
+    if (info->Attribute & EFI_FILE_DIRECTORY)
     {
         gBS->FreePool(info);
         file->Close(file);
+
         return EFI_ACCESS_DENIED;
     }
 
     gBS->FreePool(info);
-    return file->Delete(file);
+    status = file->Delete(file);
+
+    return status;
+}
+
+EFI_STATUS removeDir(EFI_FILE_PROTOCOL* Root, CHAR16* location)
+{
+    Print(L"\r\nremoveDir");
+
+    EFI_FILE_INFO* info;
+    EFI_FILE_PROTOCOL* dir;
+
+    EFI_STATUS status = openFile(Root, location, &info, &dir);
+    Print(L"\r\nEFI_STATUS status = openFile(Root, location, &info, &dir); %r", status);
+
+    if (EFI_ERROR(status))
+    {
+        return status;
+    }
+
+    if (!(info->Attribute & EFI_FILE_DIRECTORY))
+    {
+        gBS->FreePool(info);
+        dir->Close(dir);
+
+        return EFI_ACCESS_DENIED;
+    }
+
+    // for each child
+    status = dir->SetPosition(dir, 0);
+    while (TRUE)
+    {
+        Print(L"\r\nstatus = dir->SetPosition(dir, headerDefPos); %r", status);
+        if (EFI_ERROR(status))
+        {
+            gBS->FreePool(info);
+            dir->Close(dir);
+            return status;
+        }
+
+        UINTN bufferSize = 2048;
+        EFI_FILE_INFO* buffer;
+
+        status = gBS->AllocatePool(
+            EfiLoaderData,
+            bufferSize,
+            (VOID**)&buffer
+        );
+        Print(L"\r\nstatus = gBS->AllocatePool( %r", status);
+        if (EFI_ERROR(status))
+        {
+            gBS->FreePool(info);
+            dir->Close(dir);
+            return status;
+        }
+
+        status = dir->Read(
+            dir,
+            &bufferSize,
+            buffer
+        );
+        Print(L"\r\nstatus = dir->Read( %r", status);
+        if (EFI_ERROR(status))
+        {
+            gBS->FreePool(buffer);
+            gBS->FreePool(info);
+            dir->Close(dir);
+            return status;
+        }
+
+        if (bufferSize == 0)
+        {
+            gBS->FreePool(buffer);
+            gBS->FreePool(info);
+
+            return dir->Delete(dir);
+        }
+
+        if (fileProtected(buffer->FileName))
+        {
+            gBS->FreePool(buffer);
+            gBS->FreePool(info);
+            dir->Close(dir);
+            return EFI_ACCESS_DENIED;
+        }
+
+        if ((StrCmp(buffer->FileName, L".") == 0) || StrCmp(buffer->FileName, L"..") == 0)
+        {
+            gBS->FreePool(buffer);
+            continue;
+        }
+
+        if (buffer->Attribute & EFI_FILE_DIRECTORY)
+        {
+            status = removeDir(dir, buffer->FileName);
+        }
+        else
+        {
+            status = removeFile(dir, buffer->FileName);
+        }
+        Print(L"\r\nremoveFile/removeDir(dir, buffer->FileName); %r", status);
+
+        gBS->FreePool(buffer);
+
+        if (EFI_ERROR(status))
+        {
+            gBS->FreePool(info);
+            dir->Close(dir);
+            return status;
+        }
+        status = dir->SetPosition(dir, 0);      
+    }
 }
 
 void remove(CHAR16* args)
@@ -930,7 +1062,16 @@ void remove(CHAR16* args)
         return;
     }
 
-    EFI_STATUS status = removeFile(gCurrentDirectory, args, directoryDel);
+    EFI_STATUS status;
+    if (directoryDel)
+    {
+        status = removeDir(gCurrentDirectory, args);
+    }
+    else
+    {
+        status = removeFile(gCurrentDirectory, args);
+    }
+    
     if (EFI_ERROR(status))
     {
         if (status == EFI_NOT_FOUND)
