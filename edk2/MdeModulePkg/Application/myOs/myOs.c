@@ -832,7 +832,7 @@ void parseArgs(CHAR16* args, CHAR16** params, UINTN* count)
     }
 }
 
-EFI_STATUS removeFile(EFI_FILE_PROTOCOL* Root, CHAR16* location)
+EFI_STATUS removeFile(EFI_FILE_PROTOCOL* Root, CHAR16* location, BOOLEAN directoryDel)
 {
     EFI_FILE_PROTOCOL* file;
 
@@ -887,7 +887,7 @@ EFI_STATUS removeFile(EFI_FILE_PROTOCOL* Root, CHAR16* location)
         return status;
     }
 
-    if (info->Attribute & EFI_FILE_DIRECTORY)
+    if ((!directoryDel) & info->Attribute & EFI_FILE_DIRECTORY)
     {
         gBS->FreePool(info);
         file->Close(file);
@@ -900,6 +900,12 @@ EFI_STATUS removeFile(EFI_FILE_PROTOCOL* Root, CHAR16* location)
 
 void remove(CHAR16* args)
 {
+    CHAR16* params[256];
+    UINTN paramCount;
+    parseArgs(args, params, &paramCount);
+
+    BOOLEAN directoryDel = searchStrArray(paramCount, params, L"-r");
+
     if (args == NULL || *args == L'\0')
     {
         Print(L"\r\nprovide a filename.");
@@ -918,7 +924,7 @@ void remove(CHAR16* args)
         return;
     }
 
-    EFI_STATUS status = removeFile(gCurrentDirectory, args);
+    EFI_STATUS status = removeFile(gCurrentDirectory, args, directoryDel);
     if (EFI_ERROR(status))
     {
         if (status == EFI_NOT_FOUND)
