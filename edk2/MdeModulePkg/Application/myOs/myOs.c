@@ -820,22 +820,6 @@ void parseArgs(CHAR16* args, CHAR16** params, UINTN* count)
     }
 }
 
-void parseTest(CHAR16* args)
-{
-    CHAR16* params[256];
-    UINTN paramCount;
-
-    parseArgs(args, params, &paramCount);
-    
-    Print(L"\r\n");
-
-    for (UINTN i = 0; i < paramCount; i++)
-    {
-        Print(L"%s", params[i]);
-        Print(L", ");
-    }
-}
-
 EFI_STATUS removeFile(EFI_FILE_PROTOCOL* Root, CHAR16* location)
 {
     EFI_FILE_PROTOCOL* file;
@@ -1014,8 +998,7 @@ command commands[] =
     {L"edit", edit, TRUE},
     {L"remove", remove, TRUE},
     {L"rm", remove, TRUE},
-    {L"mkdir", mkdir, TRUE},
-    {L"parseTest", parseTest, TRUE}
+    {L"mkdir", mkdir, TRUE}
 };
 
 void help(CHAR16* args)
