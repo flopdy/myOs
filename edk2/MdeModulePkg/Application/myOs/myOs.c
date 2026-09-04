@@ -838,7 +838,7 @@ void parseArgs(CHAR16* args, CHAR16** params, UINTN* count)
     }
 }
 
-EFI_STATUS removeFile(EFI_FILE_PROTOCOL* Root, CHAR16* location, BOOLEAN directoryDel)
+EFI_STATUS openFile(EFI_FILE_PROTOCOL* Root, CHAR16* location, EFI_FILE_INFO** returnInfo, EFI_FILE_PROTOCOL** returnFile) // make sure to gBS->FreePool(info) and file->Close(file)
 {
     EFI_FILE_PROTOCOL* file;
 
