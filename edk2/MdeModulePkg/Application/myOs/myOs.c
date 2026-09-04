@@ -90,11 +90,17 @@ VOID* readFile(EFI_FILE_PROTOCOL* Root, CHAR16* location, UINTN* size)
     gBS->FreePool(FileInfo); // free the info
     VOID* fileData;
     // allocate memory for data
-    gBS->AllocatePool(
+    Status = gBS->AllocatePool(
         EfiLoaderData,
         DataSize,
         &fileData
     );
+    if(EFI_ERROR(Status))
+    {
+        File->Close(File);
+        return NULL;
+    }
+
     // get the file data
     Status = File->Read(
         File,
