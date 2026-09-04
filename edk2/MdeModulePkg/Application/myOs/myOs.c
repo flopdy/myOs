@@ -793,13 +793,13 @@ void edit(CHAR16* args)
     clear(L"");
 }
 
-void parseArgs(CHAR16* args, CHAR16*** params, UINTN* count)
+void parseArgs(CHAR16* args, CHAR16** params, UINTN* count)
 {
     UINTN argsLength = StrLen(args);
 
     // set every space to a break character
     *count = 0;
-    UINTN lastBreakChar = 0;
+    UINTN nextParamChar = 0;
     for (UINTN i=0; i<argsLength; i++)
     {
         if (args[i] == L' ')
@@ -807,25 +807,25 @@ void parseArgs(CHAR16* args, CHAR16*** params, UINTN* count)
             args[i] = L'\0';
 
             // enter last param into params
-            (*params)[*count] = &args[lastBreakChar + (*count != 0)]; // from last \0 to current \0
-            lastBreakChar = i;
+            params[*count] = &args[nextParamChar]; // from last char to current \0
+            nextParamChar = i + 1;
             (*count)++;
         }
     }
 
-    if (lastBreakChar < argsLength)
+    if (nextParamChar < argsLength)
     {
-        (*params)[*count] = &args[lastBreakChar];
+        params[*count] = &args[nextParamChar];
         (*count)++;
     }
 }
 
 void parseTest(CHAR16* args)
 {
-    CHAR16** params;
+    CHAR16* params[256];
     UINTN paramCount;
 
-    parseArgs(args, &params, &paramCount);
+    parseArgs(args, params, &paramCount);
     
     Print(L"\r\n");
 
@@ -1014,7 +1014,8 @@ command commands[] =
     {L"edit", edit, TRUE},
     {L"remove", remove, TRUE},
     {L"rm", remove, TRUE},
-    {L"mkdir", mkdir, TRUE}
+    {L"mkdir", mkdir, TRUE},
+    {L"parseTest", parseTest, TRUE}
 };
 
 void help(CHAR16* args)
@@ -1024,7 +1025,7 @@ void help(CHAR16* args)
     for (UINTN i = 0; i < commandCount; i++)
     {
         Print(L"\n");
-        Print(commands[i].name);        
+        Print(commands[i].name);
     }
 }
 
