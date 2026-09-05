@@ -1,23 +1,16 @@
 # tiny efi c os <3
 
-source is in edk2/MdeModulePkg/Applications/myOs/
+a smol lidl ~unix style os that uses the efi provided protocols
 
-USB contains the files for running - (minus ASSETS from an old project)
+source: [myOs/myOs.c](https://github.com/flopdy/myOs/tree/main/edk2/MdeModulePkg/Application/myOs/myOs.c)
 
-___
+## setting up on hardware
 
-## running on hardware
+check [releases](https://github.com/flopdy/myOs/releases/latest) for binaries
 
-to test ur gon need to format a usb to fat32, copy the dir EFI onto it
+youll need:
 
-so your usb should contain /EFI/BOOT/BOOTX64.EFI
-
-boot into firmware settings (del/f2), change boot priority/boot to the usb
-
-when youre done, run 'shutdown'
-
-to disable booting from usb either remove it, or change priority again to boot from ur primary os
-
-___
-
-yar
+* x86-64 (AMD64) uefi firmware
+* usb/ssd with partition in FAT32 format filesystem
+* at least 40kB free storage (recommended 45kB+ lol its so tiny)
+* folder setup: /EFI/BOOT/BOOTX64.EFI
